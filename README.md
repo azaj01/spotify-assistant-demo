@@ -52,13 +52,22 @@ Make sure to add these credentials to your `.env` file as shown in the setup sec
    pip install -r requirements.txt
    ```
 
-4. Create a `.env` file in the root directory and add your API keys:
+4. Copy the example environment file and rename it to `.env`:
+
+   ```sh
+   cp env.example .env
+   ```
+
+5. Open the `.env` file and enter your API keys and other environment variables:
+
    ```env
    SPOTIFY_CLIENT_ID=your_spotify_client_id
    SPOTIFY_CLIENT_SECRET=your_spotify_client_secret
    GOOGLE_API_KEY=your_google_api_key
    DEEPGRAM_API_KEY=your_deepgram_api_key
    CARTESIA_API_KEY=your_cartesia_api_key
+   DAILY_API_KEY=your_daily_api_key
+   DAILY_SAMPLE_ROOM=your_daily_room_url
    ```
 
 ## Running the Demo

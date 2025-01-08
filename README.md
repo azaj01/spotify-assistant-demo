@@ -6,8 +6,8 @@ The assistant uses services like Spotify API, Google LLM, Deepgram STT, and Cart
 ## Features
 
 - Authenticate with Spotify
-- Create custom playlists
-- Start playback of playlists
+- Create playlists based on mood, genre, artist or whatever comes to mind
+- Start playback of generated playlists
 
 ## Requirements
 

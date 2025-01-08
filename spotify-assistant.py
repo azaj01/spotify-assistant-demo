@@ -450,7 +450,7 @@ async def main():
         stt = DeepgramSTTService(api_key=os.getenv("DEEPGRAM_API_KEY"))
         tts = CartesiaTTSService(
             api_key=os.getenv("CARTESIA_API_KEY"),
-            voice_id="c45bc5ec-dc68-4feb-8829-6e6b2748095d",  # Movieman
+            voice_id=os.getenv("CARTESIA_VOICE_ID"),
             text_filter=MarkdownTextFilter(),
         )
 

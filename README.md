@@ -84,4 +84,4 @@ Make sure to add these credentials to your `.env` file as shown in the setup sec
 
 ## License
 
-This project is licensed under the BSD 2-Clause License.
+This project is licensed under the [BSD 2-Clause License](./LICENSE).

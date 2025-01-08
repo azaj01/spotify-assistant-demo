@@ -283,6 +283,7 @@ flow_config: FlowConfig = {
                     "role": "system",
                     "content": """
                     Ask what kind of playlist the user likes to create and how many songs it should contain (max is 100).
+                    Playlists can also be created through creative ways, e.g. to have the song titles read like a poem or something similar.
                     Once the user has chosen the type and amount of songs, generate a list of suitable songs in the format '<artist> <song title>'.
                     Don't read out the list, instead mention the top 3 artists on the list.
                     Confirm with the user before calling create_playlist.

@@ -233,13 +233,6 @@ async def authenticate_user():
         logger.error("Authentication timed out.")
         return {"success": False, "error": "Authentication timed out."}
 
-async def collect_preferences(args: FlowArgs):
-    global playlist_type, song_count
-    playlist_type = args["playlist_type"]
-    song_count = args["song_count"]
-    return {"success": True}
-
-
 
 flow_config: FlowConfig = {
     "initial_node": "greeting",
@@ -249,7 +242,7 @@ flow_config: FlowConfig = {
                 {
                     "role": "system",
                     "content": """
-                    Your name is Stan and you are a friendly Spotify playlist curator.
+                    You are Stan, a friendly Spotify playlist curator.
                     Your responses will be converted to audio, so avoid special characters.
                     Always use the available functions to progress the conversation naturally.
                     """,
@@ -259,7 +252,7 @@ flow_config: FlowConfig = {
                 {
                     "role": "system",
                     "content": """
-                    Introduce yourself briefly and ask the user to authenticate with Spotify first.
+                    Start by introducing yourself briefly and asking the user to authenticate with Spotify first.
                     Call authenticate_user to trigger the Spotify authentication flow.
                     """,
                 }
@@ -270,9 +263,9 @@ flow_config: FlowConfig = {
                         {
                             "name": "authenticate_user",
                             "handler": authenticate_user,
-                            "description": "Attempts to authenticate the user with Spotify. If authentication succeeds, confirm that the user is signed in.",
+                            "description": "Attempts to authenticate the user with Spotify.",
                             "parameters": None,
-                            "transition_to": "get_playlist_preferences",
+                            "transition_to": "create_playlist",
                         },
                         {
                             "name": "end_conversation",
@@ -284,65 +277,16 @@ flow_config: FlowConfig = {
                 }
             ],
         },
-        "get_playlist_preferences": {
+        "create_playlist": {
             "task_messages": [
                 {
                     "role": "system",
                     "content": """
-                    Don't reintroduce yourself or mention authentication. At this point authentication is already done.
-                    Ask what kind of playlist the user would like to create and how many songs it should contain (max is 100).
-                    Once you have both pieces of information, use collect_preferences to store their choices and move to the next step.
+                    Ask what kind of playlist the user likes to create and how many songs it should contain (max is 100).
+                    Once the user has chosen the type and amount of songs, generate a list of suitable songs in the format '<artist> <song title>'.
+                    Don't read out the list, instead mention the top 3 artists on the list.
+                    Confirm with the user before calling create_playlist.
                     """,
-                }
-            ],
-            "functions": [
-                {
-                    "function_declarations": [
-                        {
-                            "name": "collect_preferences",
-                            "handler": collect_preferences,
-                            "description": "Store the user's playlist preferences",
-                            "parameters": {
-                                "type": "object",
-                                "properties": {
-                                    "playlist_type": {
-                                        "type": "string",
-                                        "description": "Type/genre/mood of playlist",
-                                    },
-                                    "song_count": {
-                                        "type": "integer",
-                                        "description": "Number of songs (max 100)",
-                                    },
-                                },
-                                "required": ["playlist_type", "song_count"],
-                            },
-                            "transition_to": "confirm_and_create",
-                        },
-                        {
-                            "name": "end_conversation",
-                            "description": "End the conversation",
-                            "parameters": None,
-                            "transition_to": "end",
-                        },
-                    ]
-                }
-            ],
-        },
-        "confirm_and_create": {
-            "task_messages": [
-                {
-                    "role": "system",
-                    "content": """
-                    Generate a list of suitable songs based on the user's preferences in the format '<artist> <song title>'.
-                    Mention the top 3 artists on the list and ask for confirmation to create the playlist.
-                    Only call create_playlist after getting user confirmation.
-                    """,
-                }
-            ],
-            "pre_actions": [
-                {
-                    "type": "tts_say",
-                    "text": "Hold on while I create this awesome playlist for you...",
                 }
             ],
             "functions": [

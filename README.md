@@ -13,6 +13,7 @@ The assistant uses services like Spotify API, Google LLM, Deepgram STT, and Cart
 
 - Python 3.8+
 - Spotify Developer Account
+- Spotify account (Premium subscription required for controlling playback)
 - Google API Key
 - Deepgram API Key
 - Cartesia API Key

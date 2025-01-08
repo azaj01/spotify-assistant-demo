@@ -38,7 +38,7 @@ PORT = 8585
 REDIRECT_URI = f"http://localhost:{PORT}/callback"
 SPOTIFY_AUTH_URL = "https://accounts.spotify.com/authorize"
 SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token"
-SPOTIFY_SCOPES = "playlist-modify-public playlist-modify-private user-read-playback-state user-modify-playback-state"
+SPOTIFY_SCOPES = "playlist-modify-public playlist-modify-private user-read-playback-state user-modify-playback-state user-read-private"
 
 user_access_token = None
 playlist_uri = None
@@ -100,17 +100,21 @@ async def get_user_access_token():
     site = web.TCPSite(runner, "localhost", PORT)
     await site.start()
 
-    auth_url = (
-        f"{SPOTIFY_AUTH_URL}?response_type=code&client_id={os.getenv('SPOTIFY_CLIENT_ID')}"
-        f"&scope={SPOTIFY_SCOPES}&redirect_uri=http://localhost:{PORT}/callback"
-    )
-    print(f"Please navigate to the following URL to authenticate: {auth_url}")
-    webbrowser.open(auth_url)
+    try:
+        auth_url = (
+            f"{SPOTIFY_AUTH_URL}?response_type=code&client_id={os.getenv('SPOTIFY_CLIENT_ID')}"
+            f"&scope={SPOTIFY_SCOPES}&redirect_uri=http://localhost:{PORT}/callback"
+        )
+        print(f"Please navigate to the following URL to authenticate: {auth_url}")
+        webbrowser.open(auth_url)
 
-    while not user_access_token:
-        await asyncio.sleep(1)
+        # Wait at least 8 seconds for the LLM to update context
+        await asyncio.sleep(8)
+        while not user_access_token:
+            await asyncio.sleep(1)
+    finally:
+        await runner.cleanup()
 
-    await runner.cleanup()
     return user_access_token
 
 
@@ -125,6 +129,15 @@ async def search_song(query, token):
             if items:
                 return items[0]["uri"]
             return None
+
+
+async def check_premium_subscription(token):
+    async with aiohttp.ClientSession() as session:
+        headers = {"Authorization": f"Bearer {token}"}
+        async with session.get("https://api.spotify.com/v1/me", headers=headers) as response:
+            data = await response.json()
+            print(data)
+            return data.get("product") == "premium"
 
 
 async def create_playlist(args: FlowArgs):
@@ -171,7 +184,11 @@ async def create_playlist(args: FlowArgs):
                     )
                 logger.info("Songs added to the playlist.")
 
-        return {"success": True}
+        # Check if the user has a premium subscription
+        if await check_premium_subscription(token):
+            return {"success": True, "premium": True}
+        else:
+            return {"success": True, "premium": False}
     except Exception as e:
         logger.error(f"Error in create_playlist: {e}")
         return {"success": False, "error": str(e)}
@@ -213,11 +230,12 @@ async def start_playlist(args: FlowArgs):
         async with aiohttp.ClientSession() as session:
             headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
             data = {"context_uri": playlist_uri, "device_id": device_id}
+            print(data)
             async with session.put(
                 "https://api.spotify.com/v1/me/player/play", headers=headers, json=data
             ) as response:
                 if response.status != 204:
-                    raise Exception(f"Failed to start playback. Status code: {response.status}")
+                    raise Exception(f"Failed to start playback. Status code: {response.status} {await response.text()}")
                 logger.info(f"Playlist is now playing on device {device_id}.")
                 return {"success": True}
     except Exception as e:
@@ -285,7 +303,7 @@ flow_config: FlowConfig = {
                     Ask what kind of playlist the user likes to create and how many songs it should contain (max is 100).
                     Playlists can also be created through creative ways, e.g. to have the song titles read like a poem or something similar.
                     Once the user has chosen the type and amount of songs, generate a list of suitable songs in the format '<artist> <song title>'.
-                    Don't read out the list, instead mention the top 3 artists on the list.
+                    NEVER read out the entire list, only mention the top 3 artists on the list.
                     Confirm with the user before calling create_playlist.
                     """,
                 }
@@ -296,7 +314,7 @@ flow_config: FlowConfig = {
                         {
                             "name": "create_playlist",
                             "handler": create_playlist,
-                            "description": "Create playlist with the given title and songs. After creating the playlist, ask the user if they'd like to play it.",
+                            "description": "Create playlist with the given title and songs. After creating the playlist, silently check if the user has a premium subscription. If yes, ask if they'd like to play it, but don't mention their subscription.",
                             "parameters": {
                                 "type": "object",
                                 "properties": {
@@ -311,7 +329,7 @@ flow_config: FlowConfig = {
                                 },
                                 "required": ["title", "songs"],
                             },
-                            "transition_to": "ask_to_play",
+                            "transition_to": "ask_to_play"
                         },
                         {
                             "name": "end_conversation",
@@ -329,7 +347,7 @@ flow_config: FlowConfig = {
                     "role": "system",
                     "content": """
                     The playlist is now created.
-                    Ask the user if they'd like to play the playlist in Spotify and call start_playlist after confirming.
+                    If the user has a premium subscription, ask if they'd like to play the playlist in Spotify and call start_playlist after confirming.
                     Otherwise end the conversation via end_conversation.
                     """,
                 }
@@ -340,7 +358,7 @@ flow_config: FlowConfig = {
                         {
                             "name": "start_playlist",
                             "handler": start_playlist,
-                            "description": "Start playing the playlist",
+                            "description": "Start playing the playlist. If successful briefly say goodbye.",
                             "parameters": None,
                             "transition_to": "end",
                         },

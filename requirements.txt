@@ -1,0 +1,9 @@
+aiohttp
+asyncio
+python-dotenv~=1.0.1
+loguru
+pipecat-ai-flows
+pipecat-ai[anthropic,daily,google,deepgram,cartesia]
+onnxruntime
+openai
+anthropic

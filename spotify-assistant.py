@@ -107,7 +107,6 @@ async def get_user_access_token():
             f"{SPOTIFY_AUTH_URL}?response_type=code&client_id={os.getenv('SPOTIFY_CLIENT_ID')}"
             f"&scope={SPOTIFY_SCOPES}&redirect_uri=http://localhost:{PORT}/callback"
         )
-        print(f"Please navigate to the following URL to authenticate: {auth_url}")
         webbrowser.open(auth_url)
 
         # Wait at least 8 seconds for the LLM to update context
@@ -314,7 +313,7 @@ flow_config: FlowConfig = {
                     "content": """
                     Ask what kind of playlist the user likes to create and how many songs it should contain (max is 100).
                     Playlists can also be created through creative ways, e.g. to have the song titles read like a poem or something similar.
-                    Once the user has chosen the type and amount of songs, generate a list of suitable songs in the format '<artist> <song title>'.
+                    Once the user has chosen the type and amount of songs, generate a list of suitable songs in the format '<artist> <song title>' and suggest a playlist title.
                     NEVER read out the entire list, only mention the top 3 artists on the list.
                     Confirm with the user before calling create_playlist.
                     """,
@@ -412,7 +411,7 @@ async def main():
         transport = DailyTransport(
             room_url,
             token,
-            "Stan, the Spotify Playlist Bot",
+            "Spotify Playlist Bot",
             DailyParams(
                 audio_out_enabled=True,
                 vad_enabled=True,

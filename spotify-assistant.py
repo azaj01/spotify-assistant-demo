@@ -46,6 +46,8 @@ playlist_uri = None
 playlist_type = None
 song_count = None
 
+tts = None
+
 async def get_spotify_token():
     async with aiohttp.ClientSession() as session:
         auth = aiohttp.BasicAuth(os.getenv("SPOTIFY_CLIENT_ID"), os.getenv("SPOTIFY_CLIENT_SECRET"))
@@ -142,9 +144,19 @@ async def check_premium_subscription(token):
 
 async def create_playlist(args: FlowArgs):
     global playlist_uri
+    global tts
+
     title = args["title"]
     songs_str = args["songs"]
     songs = [song.strip() for song in songs_str.split(";")]
+
+    if len(songs) > 50:
+        await tts.say("I am creating the playlist for you now. This might take a little while.")
+    elif len(songs) > 20:
+        await tts.say("Hang on, while I'm creating the playlist for you.")
+    else:
+        await tts.say("Alright, one moment please.")
+
     token = await get_user_access_token()
 
     try:
@@ -394,6 +406,7 @@ def open_spotify_app():
 async def main():
     open_spotify_app()
     async with aiohttp.ClientSession() as session:
+        global tts
         (room_url, token) = await configure(session)
 
         transport = DailyTransport(

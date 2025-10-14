@@ -1,3 +1,6 @@
+> [!CAUTION]
+> This repo is no longer maintained. Checkout [pipecat-examples](https://github.com/pipecat-ai/pipecat-examples) for recent demos and example code.
+
 # Spotify Assistant Demo
 
 This demo showcases a Spotify Assistant that helps users create Spotify playlists through pipecat.
